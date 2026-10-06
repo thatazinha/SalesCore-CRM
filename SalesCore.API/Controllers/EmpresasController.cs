@@ -35,6 +35,24 @@ public class EmpresasController : ControllerBase
         return Ok(empresa);
     }
 
+    [HttpGet("{id}/contatos")]
+    public async Task<IActionResult> GetContatos(int id)
+    {
+        var empresa = await _context.Empresas.FindAsync(id);
+
+        if (empresa == null)
+        {
+            return NotFound();
+        }
+
+        var contatos = await _context.Contatos
+            .Where(c => c.IdEmpresa == id)
+            .ToListAsync();
+
+        return Ok(contatos);
+    }
+
+
     [HttpPost]
     public async Task<IActionResult> Post(Empresa empresa)
     {

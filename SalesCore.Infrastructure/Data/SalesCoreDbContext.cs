@@ -13,6 +13,7 @@ public class SalesCoreDbContext : DbContext
     }
 
     public DbSet<Empresa> Empresas { get; set; }
+    public DbSet<Contato> Contatos { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -47,6 +48,39 @@ public class SalesCoreDbContext : DbContext
 
             
         });
+
+        modelBuilder.Entity<Contato>(entity =>
+        {
+            entity.HasKey(c => c.IdContato);
+
+            entity.ToTable("Contato");
+
+            entity.Property(c => c.IdContato)
+                .HasColumnName("idContato");
+
+            entity.Property(c => c.Nome)
+                .HasColumnName("nome");
+
+            entity.Property(c => c.Email)
+                .HasColumnName("email");
+
+            entity.Property(c => c.Telefone)
+                .HasColumnName("telefone");
+
+            entity.Property(c => c.Cargo)
+                .HasColumnName("cargo");
+
+            entity.Property(c => c.Ativo)
+                .HasColumnName("ativo");
+
+            entity.Property(c => c.IdEmpresa)
+                .HasColumnName("idEmpresa");
+            
+            entity.HasOne(c => c.Empresa)
+                .WithMany(e => e.Contatos)
+                .HasForeignKey(c => c.IdEmpresa);
+        });
+
     }
 }
 
