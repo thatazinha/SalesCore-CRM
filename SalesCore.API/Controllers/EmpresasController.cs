@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using SalesCore.Domain.Entities;
 using SalesCore.Infrastructure.Data;
+using SalesCore.Application.DTOs;
 
 namespace SalesCore.API.Controllers;
 
@@ -14,13 +15,28 @@ public class EmpresasController : ControllerBase
     {
         _context = context;
     }
+
     [HttpGet]
     public async Task<IActionResult> Get()
     {
-        var empresas = await _context.Empresas.ToListAsync();
+        var empresas = await _context.Empresas
+            .Select(empresa => new EmpresaResponseDto
+            {
+                IdEmpresa = empresa.IdEmpresa,
+                RazaoSocial = empresa.RazaoSocial,
+                NomeFantasia = empresa.NomeFantasia,
+                Cnpj = empresa.Cnpj,
+                Email = empresa.Email,
+                Telefone = empresa.Telefone,
+                DataCadastro = empresa.DataCadastro,
+                Ativo = empresa.Ativo
+            })
+            .ToListAsync();
 
         return Ok(empresas);
     }
+
+
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
@@ -32,8 +48,21 @@ public class EmpresasController : ControllerBase
             return NotFound();
         }
 
-        return Ok(empresa);
+        var dto = new EmpresaResponseDto
+        {
+            IdEmpresa = empresa.IdEmpresa,
+            RazaoSocial = empresa.RazaoSocial,
+            NomeFantasia = empresa.NomeFantasia,
+            Cnpj = empresa.Cnpj,
+            Email = empresa.Email,
+            Telefone = empresa.Telefone,
+            DataCadastro = empresa.DataCadastro,
+            Ativo = empresa.Ativo
+        };
+
+        return Ok(dto);
     }
+
 
     [HttpGet("{id}/contatos")]
     public async Task<IActionResult> GetContatos(int id)
@@ -53,18 +82,47 @@ public class EmpresasController : ControllerBase
     }
 
 
+
     [HttpPost]
-    public async Task<IActionResult> Post(Empresa empresa)
+    public async Task<IActionResult> Post(EmpresaCreateDto dto)
     {
+        var empresa = new Empresa
+        {
+            RazaoSocial = dto.RazaoSocial,
+            NomeFantasia = dto.NomeFantasia,
+            Cnpj = dto.Cnpj,
+            Email = dto.Email,
+            Telefone = dto.Telefone,
+            DataCadastro = DateTime.Now,
+            Ativo = true
+        };
+
         _context.Empresas.Add(empresa);
 
         await _context.SaveChangesAsync();
 
-        return Ok(empresa);
+        var resposta = new EmpresaResponseDto
+        {
+            IdEmpresa = empresa.IdEmpresa,
+            RazaoSocial = empresa.RazaoSocial,
+            NomeFantasia = empresa.NomeFantasia,
+            Cnpj = empresa.Cnpj,
+            Email = empresa.Email,
+            Telefone = empresa.Telefone,
+            DataCadastro = empresa.DataCadastro,
+            Ativo = empresa.Ativo
+        };
+
+        return CreatedAtAction(
+            nameof(GetById),
+            new { id = empresa.IdEmpresa },
+            resposta);
     }
 
+
+
     [HttpPut("{id}")]
-    public async Task<IActionResult> Put(int id, Empresa empresa)
+    public async Task<IActionResult> Put(int id, EmpresaUpdateDto dto)
     {
         var empresaExistente = await _context.Empresas.FindAsync(id);
 
@@ -73,18 +131,30 @@ public class EmpresasController : ControllerBase
             return NotFound();
         }
 
-        empresaExistente.RazaoSocial = empresa.RazaoSocial;
-        empresaExistente.NomeFantasia = empresa.NomeFantasia;
-        empresaExistente.Cnpj = empresa.Cnpj;
-        empresaExistente.Email = empresa.Email;
-        empresaExistente.Telefone = empresa.Telefone;
-        empresaExistente.DataCadastro = empresa.DataCadastro;
-        empresaExistente.Ativo = empresa.Ativo;
+        empresaExistente.RazaoSocial = dto.RazaoSocial;
+        empresaExistente.NomeFantasia = dto.NomeFantasia;
+        empresaExistente.Cnpj = dto.Cnpj;
+        empresaExistente.Email = dto.Email;
+        empresaExistente.Telefone = dto.Telefone;
+        empresaExistente.Ativo = dto.Ativo;
 
         await _context.SaveChangesAsync();
 
-        return Ok(empresaExistente);
+        var resposta = new EmpresaResponseDto
+        {
+            IdEmpresa = empresaExistente.IdEmpresa,
+            RazaoSocial = empresaExistente.RazaoSocial,
+            NomeFantasia = empresaExistente.NomeFantasia,
+            Cnpj = empresaExistente.Cnpj,
+            Email = empresaExistente.Email,
+            Telefone = empresaExistente.Telefone,
+            DataCadastro = empresaExistente.DataCadastro,
+            Ativo = empresaExistente.Ativo
+        };
+
+        return Ok(resposta);
     }
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
@@ -99,7 +169,7 @@ public class EmpresasController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        return Ok();
+        return NoContent();
     }
 
 }
