@@ -16,4 +16,3 @@ namespace SalesCore.Application.DTOs
         public int IdEmpresa { get; set; }
     }
 }
-D

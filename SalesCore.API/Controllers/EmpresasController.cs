@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using SalesCore.Application.DTOs;
+using SalesCore.Application.Interfaces;
 using SalesCore.Domain.Entities;
 using SalesCore.Infrastructure.Data;
-using SalesCore.Application.DTOs;
 
 namespace SalesCore.API.Controllers;
 
@@ -11,165 +12,95 @@ namespace SalesCore.API.Controllers;
 public class EmpresasController : ControllerBase
 {
     private readonly SalesCoreDbContext _context;
-    public EmpresasController(SalesCoreDbContext context)
+    private readonly IEmpresaService _empresaService;
+
+    public EmpresasController( SalesCoreDbContext context, IEmpresaService empresaService)
     {
         _context = context;
+        _empresaService = empresaService;
     }
 
     [HttpGet]
     public async Task<IActionResult> Get()
     {
-        var empresas = await _context.Empresas
-            .Select(empresa => new EmpresaResponseDto
-            {
-                IdEmpresa = empresa.IdEmpresa,
-                RazaoSocial = empresa.RazaoSocial,
-                NomeFantasia = empresa.NomeFantasia,
-                Cnpj = empresa.Cnpj,
-                Email = empresa.Email,
-                Telefone = empresa.Telefone,
-                DataCadastro = empresa.DataCadastro,
-                Ativo = empresa.Ativo
-            })
-            .ToListAsync();
+        var empresas = await _empresaService.GetAllAsync();
 
         return Ok(empresas);
     }
 
-
-
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
-        var empresa = await _context.Empresas.FindAsync(id);
+        var empresa = await _empresaService.GetByIdAsync(id);
 
         if (empresa == null)
         {
             return NotFound();
         }
 
-        var dto = new EmpresaResponseDto
-        {
-            IdEmpresa = empresa.IdEmpresa,
-            RazaoSocial = empresa.RazaoSocial,
-            NomeFantasia = empresa.NomeFantasia,
-            Cnpj = empresa.Cnpj,
-            Email = empresa.Email,
-            Telefone = empresa.Telefone,
-            DataCadastro = empresa.DataCadastro,
-            Ativo = empresa.Ativo
-        };
-
-        return Ok(dto);
+        return Ok(empresa);
     }
+
+
 
 
     [HttpGet("{id}/contatos")]
     public async Task<IActionResult> GetContatos(int id)
     {
-        var empresa = await _context.Empresas.FindAsync(id);
+        var contatos = await _empresaService.GetContatosAsync(id);
 
-        if (empresa == null)
+        if (contatos == null)
         {
             return NotFound();
         }
-
-        var contatos = await _context.Contatos
-            .Where(c => c.IdEmpresa == id)
-            .ToListAsync();
 
         return Ok(contatos);
     }
 
 
 
+
+
     [HttpPost]
     public async Task<IActionResult> Post(EmpresaCreateDto dto)
     {
-        var empresa = new Empresa
-        {
-            RazaoSocial = dto.RazaoSocial,
-            NomeFantasia = dto.NomeFantasia,
-            Cnpj = dto.Cnpj,
-            Email = dto.Email,
-            Telefone = dto.Telefone,
-            DataCadastro = DateTime.Now,
-            Ativo = true
-        };
-
-        _context.Empresas.Add(empresa);
-
-        await _context.SaveChangesAsync();
-
-        var resposta = new EmpresaResponseDto
-        {
-            IdEmpresa = empresa.IdEmpresa,
-            RazaoSocial = empresa.RazaoSocial,
-            NomeFantasia = empresa.NomeFantasia,
-            Cnpj = empresa.Cnpj,
-            Email = empresa.Email,
-            Telefone = empresa.Telefone,
-            DataCadastro = empresa.DataCadastro,
-            Ativo = empresa.Ativo
-        };
+        var resposta = await _empresaService.CreateAsync(dto);
 
         return CreatedAtAction(
             nameof(GetById),
-            new { id = empresa.IdEmpresa },
+            new { id = resposta.IdEmpresa },
             resposta);
     }
+
 
 
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Put(int id, EmpresaUpdateDto dto)
     {
-        var empresaExistente = await _context.Empresas.FindAsync(id);
+        var resposta = await _empresaService.UpdateAsync(id, dto);
 
-        if (empresaExistente == null)
+        if (resposta == null)
         {
             return NotFound();
         }
-
-        empresaExistente.RazaoSocial = dto.RazaoSocial;
-        empresaExistente.NomeFantasia = dto.NomeFantasia;
-        empresaExistente.Cnpj = dto.Cnpj;
-        empresaExistente.Email = dto.Email;
-        empresaExistente.Telefone = dto.Telefone;
-        empresaExistente.Ativo = dto.Ativo;
-
-        await _context.SaveChangesAsync();
-
-        var resposta = new EmpresaResponseDto
-        {
-            IdEmpresa = empresaExistente.IdEmpresa,
-            RazaoSocial = empresaExistente.RazaoSocial,
-            NomeFantasia = empresaExistente.NomeFantasia,
-            Cnpj = empresaExistente.Cnpj,
-            Email = empresaExistente.Email,
-            Telefone = empresaExistente.Telefone,
-            DataCadastro = empresaExistente.DataCadastro,
-            Ativo = empresaExistente.Ativo
-        };
 
         return Ok(resposta);
     }
 
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var empresa = await _context.Empresas.FindAsync(id);
+        var excluida = await _empresaService.DeleteAsync(id);
 
-        if (empresa == null)
+        if (!excluida)
         {
             return NotFound();
         }
 
-        _context.Empresas.Remove(empresa);
-
-        await _context.SaveChangesAsync();
-
         return NoContent();
     }
+
 
 }

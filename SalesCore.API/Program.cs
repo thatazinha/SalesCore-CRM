@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using SalesCore.Application.Interfaces;
 using SalesCore.Infrastructure.Data;
+using SalesCore.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +12,8 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<SalesCoreDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("SalesCore")));
+
+builder.Services.AddScoped<IEmpresaService, EmpresaService>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
